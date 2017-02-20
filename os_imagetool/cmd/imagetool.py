@@ -83,12 +83,12 @@ def main():
         '--out-glance-disk-format',
         metavar='NAME',
         default='qcow2',
-        help='Name to use in Glance')
+        help='Disk format to use in Glance')
     parser.add_argument(
         '--out-glance-container-format',
         metavar='name',
         default='bare',
-        help='name to use in glance')
+        help='Container format to use in glance')
     parser.add_argument(
         '--out-glance-force',
         action='store_true',
@@ -105,12 +105,15 @@ def main():
     parser.add_argument(
         '--glance-rotate-deactivate',
         action='store_true',
-        help='Do not delete old images, deactivate them')
+        help='Deactivate old images')
     parser.add_argument(
         '--glance-rotate-delete',
         action='store_true',
         help='Delete old images')
-    parser.add_argument('--glance-rotate-force', action='store_true', help='')
+    parser.add_argument(
+        '--glance-rotate-force',
+        action='store_true',
+        help='Rotate images even when we did not upload anything')
     parser.add_argument(
         '--glance-rotate-suffix',
         default='(OLD)',
