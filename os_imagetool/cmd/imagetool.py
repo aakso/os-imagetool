@@ -38,7 +38,7 @@ def run_tool(args):
             raise ImageToolError("no in-image from repo or from file")
         LOG.info("in-image: %s", image)
         client = GlanceClient.from_argparse(args)
-        id = cli.download_image_to_glance(
+        imgid = cli.download_image_to_glance(
             client,
             image,
             args.out_glance_name,
@@ -47,7 +47,7 @@ def run_tool(args):
             disk_format=args.out_glance_disk_format,
             container_format=args.out_glance_container_format,
             force_upload=args.out_glance_force)
-        do_rotate = (id is not None and args.glance_rotate is not None)
+        do_rotate = (imgid is not None and args.glance_rotate is not None)
 
     if do_rotate or args.glance_rotate_force:
         if args.glance_rotate is None or args.glance_rotate < 0:

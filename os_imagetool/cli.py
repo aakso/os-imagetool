@@ -22,6 +22,8 @@ def get_io_progress_cb(total_length=None):
         bytes_read = 0
 
     def cb(chunk):
+        if total_length is None:
+            return
         counter.bytes_read += len(chunk)
         current_percent = (math.floor(counter.bytes_read /
                                       float(total_length) * 10000) / 100)
@@ -78,7 +80,7 @@ def download_image_to_glance(client,
         disk_format=disk_format,
         container_format=container_format,
         **kwargs)
-    print()
+    print(file=sys.stderr)
 
     if verify and image.checksum is not None:
         hasher = get_hasher(image.checksum_type)
@@ -92,7 +94,7 @@ def download_image_to_glance(client,
             client.client.images.delete(gimage.id)
             LOG.error('verify failed, deleted image %s', gimage.id)
             raise ImageToolError('Image verify failed')
-        print()
+        print(file=sys.stderr)
     print(gimage.id)
     return gimage.id
 

@@ -4,6 +4,7 @@ from urlparse import urlparse
 
 import requests
 
+from os_imagetool.errors import ImageToolError
 
 class Reader(object):
     def __init__(self, callback=None):
@@ -26,7 +27,10 @@ class Downloader(Reader):
         if parsed.scheme == 'file':
             stream = open(parsed.path, 'r')
         elif parsed.scheme == 'http' or parsed.scheme == 'https':
-            stream = requests.get(url, stream=True).iter_content(
+            res = requests.get(url, stream=True)
+            if not res.ok:
+                raise ImageToolError("non-ok response: {}".format(res))
+            stream = res.iter_content(
                 chunk_size=self.chunk_size)
         for chunk in self.iter_read(stream):
             yield chunk
