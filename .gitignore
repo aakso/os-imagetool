@@ -1,0 +1,7 @@
+.venv
+*.pyc
+*.sw?
+*~
+build
+dist
+os_imagetool.egg-info

@@ -1,0 +1,3 @@
+
+class ImageToolError(RuntimeError):
+    pass
