@@ -46,7 +46,8 @@ def run_tool(args):
             image_group=args.glance_image_group,
             disk_format=args.out_glance_disk_format,
             container_format=args.out_glance_container_format,
-            force_upload=args.out_glance_force)
+            force_upload=args.out_glance_force,
+            visibility=args.out_glance_visibility)
         do_rotate = (imgid is not None and args.glance_rotate is not None)
 
     if do_rotate or args.glance_rotate_force:
@@ -93,6 +94,11 @@ def main():
         '--out-glance-force',
         action='store_true',
         help='Upload image to glance even if the same image already exists')
+    parser.add_argument(
+        '--out-glance-visibility',
+        metavar='name',
+        default='private',
+        help='Set uploaded image visibility to this value')
     parser.add_argument(
         '--glance-image-group',
         metavar='NAME',

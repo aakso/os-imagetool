@@ -53,7 +53,8 @@ def download_image_to_glance(client,
                              image_group=None,
                              disk_format='qcow2',
                              container_format='bare',
-                             force_upload=False):
+                             force_upload=False,
+                             visibility='private'):
 
     images = list(
         client.list(
@@ -63,7 +64,9 @@ def download_image_to_glance(client,
             image.checksum))
         return None
 
-    kwargs = dict()
+    kwargs = dict(
+        visibility=visibility,
+    )
     if image_group is not None:
         kwargs['_image_group'] = image_group
 
