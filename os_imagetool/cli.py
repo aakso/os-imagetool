@@ -16,7 +16,7 @@ from os_imagetool.loader import Downloader, Reader
 LOG = logging.getLogger(__name__)
 
 
-def get_io_progress_cb(total_length=None):
+def get_io_progress_cb(total_length=None, out=sys.stderr):
     class counter:
         percent = 0
         bytes_read = 0
@@ -27,13 +27,23 @@ def get_io_progress_cb(total_length=None):
         counter.bytes_read += len(chunk)
         current_percent = (math.floor(counter.bytes_read /
                                       float(total_length) * 10000) / 100)
-        if counter.percent != current_percent:
-            print(
-                '  {0} / {1} ({2:.2f}%)'.format(counter.bytes_read,
-                                                total_length, current_percent),
-                end="\r",
-                file=sys.stderr)
-            counter.percent = current_percent
+        if out.isatty():
+            # Emit status 10000 times using carriage return
+            if counter.percent != current_percent:
+                print(
+                    '  {0} / {1} ({2:.2f}%)'.format(counter.bytes_read,
+                                                    total_length, current_percent),
+                    end="\r",
+                    file=sys.stderr)
+        else:
+            # Emit status 100 times per line
+            if math.floor(counter.percent) != math.floor(current_percent):
+                print(
+                    '  {0} / {1} ({2:.2f}%)'.format(counter.bytes_read,
+                                                    total_length, current_percent),
+                    end="\n",
+                    file=sys.stderr)
+        counter.percent = current_percent
 
     return cb
 
@@ -64,9 +74,7 @@ def download_image_to_glance(client,
             image.checksum))
         return None
 
-    kwargs = dict(
-        visibility=visibility,
-    )
+    kwargs = dict(visibility=visibility)
     if image_group is not None:
         kwargs['_image_group'] = image_group
 
@@ -105,21 +113,36 @@ def download_image_to_glance(client,
 def glance_rotate_images(client,
                          num,
                          image_group,
-                         suffix='(OLD)',
+                         latest_suffix=None,
+                         rotated_suffix=None,
                          deactivate=False,
-                         delete=False):
+                         delete=False,
+                         visibility='private'):
     images = client.list(image_group=image_group)
     images = sorted(
         images, key=lambda x: dp.parse(x['created_at']), reverse=True)
-    i = 1
-    for image in images[1:]:
-        if not image.get(client.PROP_ROTATED):
-            newprops = dict()
+
+    for i, image in enumerate(images):
+        newprops = dict()
+        # Latest image, add suffix if required
+        if i == 0 and latest_suffix is not None and not image.name.endswith(
+                latest_suffix):
+            newname = ' '.join([image.get(client.PROP_ORIGINAL_NAME,
+                                          image.name), latest_suffix])
+            newprops.update(name=newname)
+        # Not latest image, add timestamp and suffix if required
+        elif i > 0 and not image.get(client.PROP_ROTATED):
             newprops[client.PROP_ROTATED] = dt.datetime(
                 *time.gmtime()[:7]).isoformat() + 'Z'
-            newprops['name'] = ' '.join([image.name, suffix])
-            LOG.info('Renaming image %s: %s -> %s', image.id, image.name,
-                     newprops['name'])
+            if rotated_suffix is not None:
+                newprops.update(name=' '.join([image.get(
+                    client.PROP_ORIGINAL_NAME, image.name), rotated_suffix]))
+        if image.visibility != visibility:
+            newprops.update(visibility=visibility)
+        if newprops:
+            for k, v in newprops.items():
+                LOG.info("Image: %s update %s: %s -> %s", image.id, k,
+                         image.get(k), v)
             client.client.images.update(image.id, **newprops)
         if i > num:
             if deactivate and image.status == 'active':

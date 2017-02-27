@@ -2,6 +2,7 @@ from __future__ import print_function, unicode_literals
 
 import argparse
 import logging
+import os
 import sys
 
 import keystoneauth1.loading as loading
@@ -58,75 +59,105 @@ def run_tool(args):
             client,
             args.glance_rotate,
             args.glance_image_group,
-            suffix=args.glance_rotate_suffix,
+            latest_suffix=args.glance_rotate_latest_suffix,
+            rotated_suffix=args.glance_rotate_old_suffix,
             deactivate=args.glance_rotate_deactivate,
-            delete=args.glance_rotate_delete)
+            delete=args.glance_rotate_delete,
+            visibility=args.glance_rotate_visibility)
 
 
 def main():
     setup_logging()
     parser = argparse.ArgumentParser(
         description='Tool to handle image downloads and uploads')
-    parser.add_argument('--in-file', metavar='FILE', help='local file to send')
+    parser.add_argument(
+        '--in-file',
+        default=os.environ.get('IMAGETOOL_IN_FILE'),
+        metavar='FILE',
+        help='local file to send')
     parser.add_argument(
         '--repo',
         metavar='URL',
+        default=os.environ.get('IMAGETOOL_REPO'),
         help='url to repo containing checksums and image names')
     parser.add_argument(
         '--repo-match-pattern',
         metavar='REGEXP',
+        default=os.environ.get('IMAGETOOL_REPO_MATCH_PATTERN'),
         help='pattern to filter images with')
     parser.add_argument(
-        '--out-file', metavar='FILE', help='file to save the image')
+        '--out-file',
+        metavar='FILE',
+        default=os.environ.get('IMAGETOOL_OUT_FILE'),
+        help='file to save the image')
     parser.add_argument(
-        '--out-glance-name', metavar='NAME', help='Name to use in Glance')
+        '--out-glance-name',
+        metavar='NAME',
+        default=os.environ.get('IMAGETOOL_OUT_GLANCE_NAME'),
+        help='Name to use in Glance')
     parser.add_argument(
         '--out-glance-disk-format',
         metavar='NAME',
-        default='qcow2',
+        default=os.environ.get('IMAGETOOL_OUT_DISK_FORMAT', 'qcow2'),
         help='Disk format to use in Glance')
     parser.add_argument(
         '--out-glance-container-format',
         metavar='name',
-        default='bare',
+        default=os.environ.get('IMAGETOOL_OUT_CONTAINER_FORMAT', 'bare'),
         help='Container format to use in glance')
     parser.add_argument(
         '--out-glance-force',
         action='store_true',
+        default=env_bool('IMAGETOOL_OUT_GLANCE_FORCE'),
         help='Upload image to glance even if the same image already exists')
     parser.add_argument(
         '--out-glance-visibility',
         metavar='name',
-        default='private',
+        default=os.environ.get('IMAGETOOL_OUT_GLANCE_VISIBILITY', 'private'),
         help='Set uploaded image visibility to this value')
     parser.add_argument(
         '--glance-image-group',
         metavar='NAME',
+        default=os.environ.get('IMAGETOOL_GLANCE_IMAGE_GROUP'),
         help='Group name to use in glance for upload and rotate')
     parser.add_argument(
         '--glance-rotate',
         metavar='NUM',
         type=int,
+        default=int(os.environ.get('IMAGETOOL_GLANCE_ROTATE', 0)),
         help='Rotate images in glance by the image group, keep NUM amount of old images')
     parser.add_argument(
         '--glance-rotate-deactivate',
         action='store_true',
+        default=env_bool('IMAGETOOL_GLANCE_ROTATE_DEACTIVATE'),
         help='Deactivate old images')
     parser.add_argument(
         '--glance-rotate-delete',
         action='store_true',
+        default=env_bool('IMAGETOOL_GLANCE_ROTATE_DELETE'),
         help='Delete old images')
     parser.add_argument(
         '--glance-rotate-force',
         action='store_true',
+        default=env_bool('IMAGETOOL_GLANCE_ROTATE_FORCE'),
         help='Rotate images even when we did not upload anything')
     parser.add_argument(
-        '--glance-rotate-suffix',
-        default='(OLD)',
+        '--glance-rotate-latest-suffix',
+        default=os.environ.get('IMAGETOOL_GLANCE_ROTATE_LATEST_SUFFIX'),
+        help='Rename latest image. Add this suffix')
+    parser.add_argument(
+        '--glance-rotate-old-suffix',
+        default=os.environ.get('IMAGETOOL_GLANCE_ROTATE_OLD_SUFFIX'),
         help='Rename old images. Add this suffix')
+    parser.add_argument(
+        '--glance-rotate-visibility',
+        metavar='name',
+        default=os.environ.get('IMAGETOOL_GLANCE_ROTATE_VISIBILITY', 'private'),
+        help='Set latest image visibility to this value')
     parser.add_argument(
         '--verify',
         action='store_true',
+        default=env_bool('IMAGETOOL_VERIFY'),
         help='Verify uploaded or downloaded image')
 
     loading.register_auth_argparse_arguments(parser, sys.argv)
@@ -143,6 +174,14 @@ def main():
         print('User interrupt')
         return 1
     return 0
+
+
+def env_bool(var):
+    val = os.environ.get(var)
+    if val and val.lower() in ['true', 't', '1']:
+        return True
+    else:
+        return False
 
 
 if __name__ == '__main__':

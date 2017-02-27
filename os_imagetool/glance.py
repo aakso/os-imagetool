@@ -28,6 +28,7 @@ class GlanceClient(object):
     PROP_IMAGE_GROUP = '_image_group'
     PROP_CHECKSUM = '_checksum_{}'
     PROP_ROTATED = '_rotated'
+    PROP_ORIGINAL_NAME = '_orig_name'
 
     @classmethod
     def from_argparse(cls, args):
@@ -58,6 +59,7 @@ class GlanceClient(object):
         return images
 
     def upload_image(self, image_name, stream, **kwargs):
+        kwargs[self.PROP_ORIGINAL_NAME] = image_name
         image = self.client.images.create(name=image_name, **kwargs)
         LOG.info('created image: {}'.format(image.id))
         try:
