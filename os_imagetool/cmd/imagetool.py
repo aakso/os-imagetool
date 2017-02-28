@@ -33,7 +33,11 @@ def run_tool(args):
         if not image:
             raise ImageToolError("no in-image from repo or from file")
         LOG.info("in-image: %s", image)
-        cli.download_image_to_file(image, args.out_file, args.verify)
+        cli.download_image_to_file(
+            image,
+            args.out_file,
+            verify=args.verify,
+            force=args.out_file_force)
     elif args.out_glance_name:
         if not image:
             raise ImageToolError("no in-image from repo or from file")
@@ -90,6 +94,11 @@ def main():
         metavar='FILE',
         default=os.environ.get('IMAGETOOL_OUT_FILE'),
         help='file to save the image')
+    parser.add_argument(
+        '--out-file-force',
+        action='store_true',
+        default=env_bool('IMAGETOOL_OUT_FILE_FORCE'),
+        help='Download image to file even if the same image already exists')
     parser.add_argument(
         '--out-glance-name',
         metavar='NAME',
@@ -152,7 +161,8 @@ def main():
     parser.add_argument(
         '--glance-rotate-visibility',
         metavar='name',
-        default=os.environ.get('IMAGETOOL_GLANCE_ROTATE_VISIBILITY', 'private'),
+        default=os.environ.get('IMAGETOOL_GLANCE_ROTATE_VISIBILITY',
+                               'private'),
         help='Set latest image visibility to this value')
     parser.add_argument(
         '--verify',
@@ -182,6 +192,7 @@ def env_bool(var):
         return True
     else:
         return False
+
 
 if __name__ == '__main__':
     sys.exit(main())

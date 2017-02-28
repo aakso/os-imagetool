@@ -31,16 +31,16 @@ def get_io_progress_cb(total_length=None, out=sys.stderr):
             # Emit status 10000 times using carriage return
             if counter.percent != current_percent:
                 print(
-                    '  {0} / {1} ({2:.2f}%)'.format(counter.bytes_read,
-                                                    total_length, current_percent),
+                    '  {0} / {1} ({2:.2f}%)'.format(
+                        counter.bytes_read, total_length, current_percent),
                     end="\r",
                     file=sys.stderr)
         else:
             # Emit status 100 times per line
             if math.floor(counter.percent) != math.floor(current_percent):
                 print(
-                    '  {0} / {1} ({2:.2f}%)'.format(counter.bytes_read,
-                                                    total_length, current_percent),
+                    '  {0} / {1} ({2:.2f}%)'.format(
+                        counter.bytes_read, total_length, current_percent),
                     end="\n",
                     file=sys.stderr)
         counter.percent = current_percent
@@ -153,11 +153,23 @@ def glance_rotate_images(client,
                 client.client.images.delete(image.id)
 
 
-def download_image_to_file(image, out_file, verify=False):
+def download_image_to_file(image, out_file, verify=False, force=False):
     cb = get_io_progress_cb(total_length=image.size)
     loader = Downloader(callback=cb)
-    if verify:
+    hasher = get_hasher(image.checksum_type)
+    # Check if image already exists
+    if os.path.isfile(out_file) and not force:
+        with open(out_file, 'r') as f:
+            while True:
+                buf = f.read(65536)
+                if not buf: break
+                hasher.update(buf)
+            if hasher.hexdigest() == image.checksum:
+                LOG.info("Image with checksum {} already exists, skipping".
+                         format(image.checksum))
+                return
         hasher = get_hasher(image.checksum_type)
+
     with open(out_file, 'w') as f:
         LOG.info('starting to download {} -> {}'.format(image.location,
                                                         out_file))
