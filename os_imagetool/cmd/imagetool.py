@@ -124,7 +124,7 @@ def main():
         '--glance-rotate',
         metavar='NUM',
         type=int,
-        default=int(os.environ.get('IMAGETOOL_GLANCE_ROTATE', 0)),
+        default=(lambda x=os.environ.get('IMAGETOOL_GLANCE_ROTATE'): int(x) if x else None)(),
         help='Rotate images in glance by the image group, keep NUM amount of old images')
     parser.add_argument(
         '--glance-rotate-deactivate',
@@ -182,7 +182,6 @@ def env_bool(var):
         return True
     else:
         return False
-
 
 if __name__ == '__main__':
     sys.exit(main())
