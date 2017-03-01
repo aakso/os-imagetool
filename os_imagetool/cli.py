@@ -175,7 +175,7 @@ def download_image_to_file(image, out_file, verify=False, force=False):
                                                         out_file))
         for data in loader.iter_download(image.location):
             f.write(data)
-        print()
+        print(file=sys.stderr)
         LOG.info("Download done")
     if verify:
         with open(out_file, 'r') as f:
