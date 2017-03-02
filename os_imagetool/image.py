@@ -2,6 +2,8 @@ import os
 import datetime
 import hashlib
 
+from os_imagetool.loader import DEFAULT_CHUNK_SIZE
+
 class Image(object):
     def __init__(self, name=None, checksum=None, checksum_type=None, location=None, size=None, last_modified=None):
         self.name = name
@@ -23,7 +25,7 @@ class Image(object):
                 last_modified=datetime.datetime.fromtimestamp(stat.st_mtime)
             )
             while True:
-                buf = f.read(65536)
+                buf = f.read(DEFAULT_CHUNK_SIZE)
                 if not buf: break
                 hasher.update(buf)
             image.checksum = hasher.hexdigest()

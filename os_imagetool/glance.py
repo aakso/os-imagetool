@@ -3,15 +3,20 @@ from __future__ import print_function, unicode_literals
 import logging
 import sys
 
+import glanceclient.common.http as glance_http
 import keystoneauth1.loading as ksloading
 import six
 from glanceclient.v2.client import Client
 from keystoneauth1.session import Session
 
 from os_imagetool.errors import ImageToolError
+from os_imagetool.loader import DEFAULT_CHUNK_SIZE
 
 LOG = logging.getLogger(__name__)
 
+# Override glance chunk size with our default for performance
+# Too bad they don't expose this
+glance_http.CHUNKSIZE = DEFAULT_CHUNK_SIZE
 
 class GlanceChunkAdapter(object):
     def __init__(self, stream):

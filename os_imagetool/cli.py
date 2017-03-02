@@ -9,9 +9,10 @@ import sys
 import time
 
 import dateutil.parser as dp
+import six
 
 from os_imagetool.errors import ImageToolError
-from os_imagetool.loader import Downloader, Reader
+from os_imagetool.loader import DEFAULT_CHUNK_SIZE, Downloader, Reader
 
 LOG = logging.getLogger(__name__)
 
@@ -93,19 +94,23 @@ def download_image_to_glance(client,
         **kwargs)
     print(file=sys.stderr)
 
-    if verify and image.checksum is not None:
-        hasher = get_hasher(image.checksum_type)
-        LOG.info('starting to download image from glance for verify')
-        stream = client.client.images.data(gimage.id, do_checksum=False)
-        cb = get_io_progress_cb(total_length=image.size)
-        reader = Reader(callback=cb)
-        for chunk in reader.iter_read(stream):
-            hasher.update(chunk)
-        if image.checksum != hasher.hexdigest():
-            client.client.images.delete(gimage.id)
-            LOG.error('verify failed, deleted image %s', gimage.id)
-            raise ImageToolError('Image verify failed')
-        print(file=sys.stderr)
+    try:
+        if verify and image.checksum is not None:
+            hasher = get_hasher(image.checksum_type)
+            LOG.info('starting to download image from glance for verify')
+            stream = client.client.images.data(gimage.id, do_checksum=False)
+            cb = get_io_progress_cb(total_length=image.size)
+            reader = Reader(callback=cb)
+            for chunk in reader.iter_read(stream):
+                hasher.update(chunk)
+            if image.checksum != hasher.hexdigest():
+                raise ImageToolError('Image verify failed')
+            print(file=sys.stderr)
+    except:
+        client.client.images.delete(gimage.id)
+        LOG.error('verify failed, deleted image %s', gimage.id)
+        six.reraise(*sys.exc_info())
+
     print(gimage.id)
     return gimage.id
 
@@ -161,7 +166,7 @@ def download_image_to_file(image, out_file, verify=False, force=False):
     if os.path.isfile(out_file) and not force:
         with open(out_file, 'r') as f:
             while True:
-                buf = f.read(65536)
+                buf = f.read(DEFAULT_CHUNK_SIZE)
                 if not buf: break
                 hasher.update(buf)
             if hasher.hexdigest() == image.checksum:
@@ -180,7 +185,7 @@ def download_image_to_file(image, out_file, verify=False, force=False):
     if verify:
         with open(out_file, 'r') as f:
             while True:
-                buf = f.read(65536)
+                buf = f.read(DEFAULT_CHUNK_SIZE)
                 if not buf: break
                 hasher.update(buf)
             if hasher.hexdigest() != image.checksum:
