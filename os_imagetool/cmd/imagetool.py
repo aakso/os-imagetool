@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import sys
+import signal
 
 import keystoneauth1.loading as loading
 
@@ -15,6 +16,15 @@ from os_imagetool.image import Image
 from os_imagetool.log import set_debug, setup_logging
 
 LOG = logging.getLogger('imagetool')
+
+
+# Treat SIGTERM as interrupt so we can abort this tool 
+# cleanly for example in Jenkins
+def sigterm(s, f):
+    raise KeyboardInterrupt('SIGTERM')
+
+
+signal.signal(signal.SIGTERM, sigterm)
 
 
 def run_tool(args):
