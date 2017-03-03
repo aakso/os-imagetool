@@ -43,7 +43,7 @@ class Downloader(Reader):
                 raise ImageToolError("non-ok response: {}".format(res))
             stream = res.iter_content(
                 chunk_size=self.chunk_size)
-        if getattr(stream, 'read'):
+        if hasattr(stream, 'read'):
             method = functools.partial(self.bufread, chunk_size=self.chunk_size)
         else:
             method = self.iter_read
