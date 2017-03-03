@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 import datetime
 import hashlib
@@ -30,6 +32,14 @@ class Image(object):
                 hasher.update(buf)
             image.checksum = hasher.hexdigest()
         return image
+
+    @property
+    def checksum(self):
+        return self._checksum
+
+    @checksum.setter
+    def checksum(self, value):
+        self._checksum = value.lower()
 
     @property
     def checksum_type(self):
