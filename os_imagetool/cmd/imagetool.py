@@ -61,6 +61,9 @@ def run_tool(args):
             image_group=args.glance_image_group,
             disk_format=args.out_glance_disk_format,
             container_format=args.out_glance_container_format,
+            min_disk=args.out_glance_min_disk,
+            min_ram=args.out_glance_min_ram,
+            properties=dict(args.out_glance_properties),
             force_upload=args.out_glance_force,
             visibility=args.out_glance_visibility)
         do_rotate = (imgid is not None and args.glance_rotate is not None)
@@ -107,7 +110,7 @@ def main():
     parser.add_argument(
         '--out-file-force',
         action='store_true',
-        default=env_bool('IMAGETOOL_OUT_FILE_FORCE'),
+        default=parse_bool('IMAGETOOL_OUT_FILE_FORCE'),
         help='Download image to file even if the same image already exists')
     parser.add_argument(
         '--out-glance-name',
@@ -125,9 +128,26 @@ def main():
         default=os.environ.get('IMAGETOOL_OUT_CONTAINER_FORMAT', 'bare'),
         help='Container format to use in glance')
     parser.add_argument(
+        '--out-glance-min-disk',
+        metavar='GB',
+        type=int,
+        default=[os.environ.get('IMAGETOOL_OUT_GLANCE_MIN_DISK')],
+        help='Optional minimum disk size required for the image in gigabytes')
+    parser.add_argument(
+        '--out-glance-min-ram',
+        metavar='MB',
+        type=int,
+        default=os.environ.get('IMAGETOOL_OUT_GLANCE_MIN_RAM'),
+        help='Optional minimum ram size required for the image in megabytes')
+    parser.add_argument(
+        '--out-glance-properties',
+        metavar='KEY=VAL,KEY=VAL,..',
+        default=os.environ.get('IMAGETOOL_OUT_GLANCE_PROPERTY'),
+        help='Additional image properties to set')
+    parser.add_argument(
         '--out-glance-force',
         action='store_true',
-        default=env_bool('IMAGETOOL_OUT_GLANCE_FORCE'),
+        default=parse_bool('IMAGETOOL_OUT_GLANCE_FORCE'),
         help='Upload image to glance even if the same image already exists')
     parser.add_argument(
         '--out-glance-visibility',
@@ -148,17 +168,17 @@ def main():
     parser.add_argument(
         '--glance-rotate-deactivate',
         action='store_true',
-        default=env_bool('IMAGETOOL_GLANCE_ROTATE_DEACTIVATE'),
+        default=parse_bool('IMAGETOOL_GLANCE_ROTATE_DEACTIVATE'),
         help='Deactivate old images')
     parser.add_argument(
         '--glance-rotate-delete',
         action='store_true',
-        default=env_bool('IMAGETOOL_GLANCE_ROTATE_DELETE'),
+        default=parse_bool('IMAGETOOL_GLANCE_ROTATE_DELETE'),
         help='Delete old images')
     parser.add_argument(
         '--glance-rotate-force',
         action='store_true',
-        default=env_bool('IMAGETOOL_GLANCE_ROTATE_FORCE'),
+        default=parse_bool('IMAGETOOL_GLANCE_ROTATE_FORCE'),
         help='Rotate images even when we did not upload anything')
     parser.add_argument(
         '--glance-rotate-latest-suffix',
@@ -177,7 +197,7 @@ def main():
     parser.add_argument(
         '--verify',
         action='store_true',
-        default=env_bool('IMAGETOOL_VERIFY'),
+        default=parse_bool('IMAGETOOL_VERIFY'),
         help='Verify uploaded or downloaded image')
 
     loading.register_auth_argparse_arguments(parser, sys.argv)
@@ -186,6 +206,11 @@ def main():
     args = parser.parse_args()
 
     try:
+        # Parse ['key1=val', 'key2=val,key3=val']
+        if args.out_glance_properties:
+            props = args.out_glance_properties[:]
+            args.out_glance_properties = [parse_kvs(item) for item in parse_list(props)]
+
         run_tool(args)
     except ImageToolError as e:
         print('ERROR: {}'.format(e), file=sys.stderr)
@@ -195,14 +220,25 @@ def main():
         return 1
     return 0
 
-
-def env_bool(var):
+def parse_bool(var):
     val = os.environ.get(var)
     if val and val.lower() in ['true', 't', '1']:
         return True
     else:
         return False
 
+def parse_list(var):
+    if var:
+        return var.split(',')
+    else:
+        return []
+
+def parse_kvs(var):
+    p = var.split('=')
+    if len(p) == 2:
+        return (p[0].strip(), p[1].strip())
+    else:
+        raise ImageToolError('cannot parse {}'.format(var))
 
 if __name__ == '__main__':
     sys.exit(main())

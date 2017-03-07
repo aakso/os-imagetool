@@ -64,6 +64,9 @@ def download_image_to_glance(client,
                              image_group=None,
                              disk_format='qcow2',
                              container_format='bare',
+                             min_disk=None,
+                             min_ram=None,
+                             properties=dict(),
                              force_upload=False,
                              visibility='private'):
 
@@ -75,7 +78,13 @@ def download_image_to_glance(client,
             image.checksum))
         return None
 
-    kwargs = dict(visibility=visibility)
+    kwargs = properties
+    kwargs.update(dict(
+        visibility=visibility,
+        min_disk=min_disk,
+        min_ram=min_ram,
+        ))
+
     if image_group is not None:
         kwargs['_image_group'] = image_group
 
