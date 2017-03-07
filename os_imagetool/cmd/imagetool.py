@@ -63,7 +63,7 @@ def run_tool(args):
             container_format=args.out_glance_container_format,
             min_disk=args.out_glance_min_disk,
             min_ram=args.out_glance_min_ram,
-            properties=dict(args.out_glance_properties),
+            properties=dict(args.out_glance_properties or []),
             force_upload=args.out_glance_force,
             visibility=args.out_glance_visibility)
         do_rotate = (imgid is not None and args.glance_rotate is not None)
