@@ -79,15 +79,12 @@ def download_image_to_glance(client,
         return None
 
     kwargs = properties
-    kwargs.update(dict(
-        visibility=visibility,
-        min_disk=min_disk,
-        min_ram=min_ram,
-        ))
-
+    if min_disk is not None:
+        kwargs['min_disk'] = min_disk
+    if min_ram is not None:
+        kwargs['min_ram'] = min_ram
     if image_group is not None:
         kwargs['_image_group'] = image_group
-
     if image.checksum is not None and image.checksum_type is not None:
         kwargs['_checksum_{}'.format(image.checksum_type)] = image.checksum
 

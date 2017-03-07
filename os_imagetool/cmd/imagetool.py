@@ -131,7 +131,7 @@ def main():
         '--out-glance-min-disk',
         metavar='GB',
         type=int,
-        default=[os.environ.get('IMAGETOOL_OUT_GLANCE_MIN_DISK')],
+        default=os.environ.get('IMAGETOOL_OUT_GLANCE_MIN_DISK'),
         help='Optional minimum disk size required for the image in gigabytes')
     parser.add_argument(
         '--out-glance-min-ram',
