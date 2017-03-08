@@ -110,7 +110,7 @@ def main():
     parser.add_argument(
         '--out-file-force',
         action='store_true',
-        default=parse_bool('IMAGETOOL_OUT_FILE_FORCE'),
+        default=parse_bool(os.environ.get('IMAGETOOL_OUT_FILE_FORCE')),
         help='Download image to file even if the same image already exists')
     parser.add_argument(
         '--out-glance-name',
@@ -147,7 +147,7 @@ def main():
     parser.add_argument(
         '--out-glance-force',
         action='store_true',
-        default=parse_bool('IMAGETOOL_OUT_GLANCE_FORCE'),
+        default=parse_bool(os.environ.get('IMAGETOOL_OUT_GLANCE_FORCE')),
         help='Upload image to glance even if the same image already exists')
     parser.add_argument(
         '--out-glance-visibility',
@@ -168,17 +168,17 @@ def main():
     parser.add_argument(
         '--glance-rotate-deactivate',
         action='store_true',
-        default=parse_bool('IMAGETOOL_GLANCE_ROTATE_DEACTIVATE'),
+        default=parse_bool(os.environ.get('IMAGETOOL_GLANCE_ROTATE_DEACTIVATE')),
         help='Deactivate old images')
     parser.add_argument(
         '--glance-rotate-delete',
         action='store_true',
-        default=parse_bool('IMAGETOOL_GLANCE_ROTATE_DELETE'),
+        default=parse_bool(os.environ.get('IMAGETOOL_GLANCE_ROTATE_DELETE')),
         help='Delete old images')
     parser.add_argument(
         '--glance-rotate-force',
         action='store_true',
-        default=parse_bool('IMAGETOOL_GLANCE_ROTATE_FORCE'),
+        default=parse_bool(os.environ.get('IMAGETOOL_GLANCE_ROTATE_FORCE')),
         help='Rotate images even when we did not upload anything')
     parser.add_argument(
         '--glance-rotate-latest-suffix',
@@ -197,7 +197,7 @@ def main():
     parser.add_argument(
         '--verify',
         action='store_true',
-        default=parse_bool('IMAGETOOL_VERIFY'),
+        default=parse_bool(os.environ.get('IMAGETOOL_VERIFY')),
         help='Verify uploaded or downloaded image')
 
     loading.register_auth_argparse_arguments(parser, sys.argv)
@@ -220,21 +220,20 @@ def main():
         return 1
     return 0
 
-def parse_bool(var):
-    val = os.environ.get(var)
+def parse_bool(val):
     if val and val.lower() in ['true', 't', '1']:
         return True
     else:
         return False
 
-def parse_list(var):
-    if var:
-        return var.split(',')
+def parse_list(val):
+    if val:
+        return val.split(',')
     else:
         return []
 
-def parse_kvs(var):
-    p = var.split('=')
+def parse_kvs(val):
+    p = val.split('=')
     if len(p) == 2:
         return (p[0].strip(), p[1].strip())
     else:
