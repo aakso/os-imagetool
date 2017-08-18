@@ -71,6 +71,8 @@ def run_tool(args):
     if do_rotate or args.glance_rotate_force:
         if args.glance_rotate is None or args.glance_rotate < 0:
             raise ImageToolError("invalid value for glance_rotate")
+        if not args.glance_image_group:
+            raise ImageToolError("image group is required")
         client = GlanceClient.from_argparse(args)
         cli.glance_rotate_images(
             client,
@@ -80,6 +82,7 @@ def run_tool(args):
             rotated_suffix=args.glance_rotate_old_suffix,
             deactivate=args.glance_rotate_deactivate,
             delete=args.glance_rotate_delete,
+            hide=args.glance_rotate_hide,
             visibility=args.glance_rotate_visibility)
 
 
@@ -164,7 +167,8 @@ def main():
         metavar='NUM',
         type=int,
         default=(lambda x=os.environ.get('IMAGETOOL_GLANCE_ROTATE'): int(x) if x else None)(),
-        help='Rotate images in glance by the image group, keep NUM amount of old images')
+        help='Rotate images in glance by the image group, keep NUM amount of old images '+
+             'before deleting/deactivating/hiding them')
     parser.add_argument(
         '--glance-rotate-deactivate',
         action='store_true',
@@ -175,6 +179,11 @@ def main():
         action='store_true',
         default=parse_bool(os.environ.get('IMAGETOOL_GLANCE_ROTATE_DELETE')),
         help='Delete old images')
+    parser.add_argument(
+        '--glance-rotate-hide',
+        action='store_true',
+        default=parse_bool(os.environ.get('IMAGETOOL_GLANCE_ROTATE_HIDE')),
+        help='Hide old images')
     parser.add_argument(
         '--glance-rotate-force',
         action='store_true',

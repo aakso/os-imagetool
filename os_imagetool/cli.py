@@ -128,6 +128,7 @@ def glance_rotate_images(client,
                          rotated_suffix=None,
                          deactivate=False,
                          delete=False,
+                         hide=False,
                          visibility='private'):
     images = client.list(image_group=image_group)
     images = sorted(
@@ -148,20 +149,27 @@ def glance_rotate_images(client,
             if rotated_suffix is not None:
                 newprops.update(name=' '.join([image.get(
                     client.PROP_ORIGINAL_NAME, image.name), rotated_suffix]))
+
+        # Ensure desired visibility level for all images
         if image.visibility != visibility:
             newprops.update(visibility=visibility)
+
+        # Handle images you want to delete/deactivate/hide
+        if i > num:
+            if hide and image.visibility != 'community':
+                newprops.update(visibility='community')
+            if deactivate and image.status == 'active':
+                LOG.info('Deactivating image %s', image.id)
+                client.client.images.deactivate(image.id)
+            if delete:
+                LOG.info('Deleting image %s', image.id)
+                client.client.images.delete(image.id)
+                continue
         if newprops:
             for k, v in newprops.items():
                 LOG.info("Image: %s update %s: %s -> %s", image.id, k,
                          image.get(k), v)
             client.client.images.update(image.id, **newprops)
-        if i > num:
-            if deactivate and image.status == 'active':
-                LOG.info('Deactivating image %s', image.id)
-                client.client.images.deactivate(image.id)
-            elif delete:
-                LOG.info('Deleting image %s', image.id)
-                client.client.images.delete(image.id)
 
 
 def download_image_to_file(image, out_file, verify=False, force=False):
