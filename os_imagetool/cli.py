@@ -136,19 +136,29 @@ def glance_rotate_images(client,
 
     for i, image in enumerate(images):
         newprops = dict()
-        # Latest image, add suffix if required
-        if i == 0 and latest_suffix is not None and not image.name.endswith(
-                latest_suffix):
-            newname = ' '.join([image.get(client.PROP_ORIGINAL_NAME,
-                                          image.name), latest_suffix])
-            newprops.update(name=newname)
-        # Not latest image, add timestamp and suffix if required
-        elif i > 0 and not image.get(client.PROP_ROTATED):
-            newprops[client.PROP_ROTATED] = dt.datetime(
-                *time.gmtime()[:7]).isoformat() + 'Z'
-            if rotated_suffix is not None:
+        # Latest image
+        if i == 0:
+            # Add suffix if required
+            if latest_suffix is not None and not image.name.endswith(
+                    latest_suffix):
+                newname = ' '.join([image.get(client.PROP_ORIGINAL_NAME,
+                                              image.name), latest_suffix])
+                newprops.update(name=newname)
+            if not image.get(client.PROP_IS_LATEST) == 'True':
+                newprops[client.PROP_IS_LATEST] = 'True'
+
+        # Not latest image
+        elif i > 0:
+            # Add timestamp and suffix if required
+            if not image.get(client.PROP_ROTATED):
+                newprops[client.PROP_ROTATED] = dt.datetime(*time.gmtime(
+                )[:7]).isoformat() + 'Z'
+            if rotated_suffix is not None and not image.name.endswith(
+                    rotated_suffix):
                 newprops.update(name=' '.join([image.get(
                     client.PROP_ORIGINAL_NAME, image.name), rotated_suffix]))
+            if not image.get(client.PROP_IS_LATEST) == 'False':
+                newprops[client.PROP_IS_LATEST] = 'False'
 
         # Ensure desired visibility level for all images
         if image.visibility != visibility:

@@ -34,6 +34,7 @@ class GlanceClient(object):
     PROP_CHECKSUM = '_checksum_{}'
     PROP_ROTATED = '_rotated'
     PROP_ORIGINAL_NAME = '_orig_name'
+    PROP_IS_LATEST = '_is_latest'
 
     @classmethod
     def from_argparse(cls, args):
