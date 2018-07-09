@@ -166,8 +166,10 @@ def glance_rotate_images(client,
 
         # Handle images you want to delete/deactivate/hide
         if i > num:
-            if hide and image.visibility != 'community':
-                newprops.update(visibility='community')
+            if hide:
+                newprops.pop('visibility', None)
+                if image.visibility != 'community':
+                    newprops.update(visibility='community')
             if deactivate and image.status == 'active':
                 LOG.info('Deactivating image %s', image.id)
                 client.client.images.deactivate(image.id)
